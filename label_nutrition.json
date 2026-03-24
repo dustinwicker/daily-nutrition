@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "notes": "Per-serving values transcribed from your Costco / label photos (Mar 2026). Verify if packaging changes.",
+  "foods": [
+    {
+      "match": ["terra delyssa", "olive oil"],
+      "photo": "product-labels/terra-delyssa-organic-evoo-nutrition.png",
+      "kind": "per_tbsp",
+      "per_tbsp": {
+        "kcal": 120,
+        "protein_g": 0,
+        "fat_g": 13,
+        "carbs_g": 0,
+        "fiber_g": 0,
+        "sodium_mg": 0
+      },
+      "label_note": "1 Tbsp (15 mL)"
+    },
+    {
+      "match": ["lundberg", "short grain"],
+      "photo": "product-labels/lundberg-organic-short-grain-brown-rice-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 45,
+      "per_serving": {
+        "kcal": 150,
+        "protein_g": 3,
+        "fat_g": 1.5,
+        "carbs_g": 35,
+        "fiber_g": 3,
+        "sodium_mg": 0
+      },
+      "label_note": "1/4 cup dry (45 g)"
+    },
+    {
+      "match": ["kirkland", "chicken stock"],
+      "photo": "product-labels/kirkland-organic-chicken-stock-nutrition.png",
+      "kind": "per_ml",
+      "serving_ml": 240,
+      "per_serving": {
+        "kcal": 10,
+        "protein_g": 2,
+        "fat_g": 0,
+        "carbs_g": 0,
+        "fiber_g": 0,
+        "sodium_mg": 440
+      },
+      "label_note": "1 cup (240 mL); grams assumed 1 g ≈ 1 mL"
+    },
+    {
+      "match": ["california gold", "collagen"],
+      "photo": "product-labels/california-gold-bovine-collagen-supplement-facts.png",
+      "kind": "per_grams",
+      "serving_g": 10,
+      "per_serving": {
+        "kcal": 35,
+        "protein_g": 9,
+        "fat_g": 0,
+        "carbs_g": 0,
+        "fiber_g": 0,
+        "sodium_mg": 45
+      },
+      "label_note": "2 scoops (10 g) on pouch"
+    },
+    {
+      "match": ["kirkland", "strawberries"],
+      "photo": "product-labels/kirkland-organic-strawberries-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 140,
+      "per_serving": {
+        "kcal": 50,
+        "protein_g": 0.71,
+        "fat_g": 0,
+        "carbs_g": 13,
+        "fiber_g": 3,
+        "sodium_mg": 0
+      },
+      "label_note": "1 cup (140 g). Protein on label is '<1 g' (FDA rounds down); 0.71 g/140 g is an assumed midpoint so 254 g can be scaled—replace in JSON if you prefer 0 or 1 g per cup."
+    },
+    {
+      "match": ["kirkland", "eggs", "pasture"],
+      "photo": "product-labels/kirkland-organic-pasture-eggs-nutrition.png",
+      "kind": "per_egg",
+      "egg_g": 50,
+      "per_egg": {
+        "kcal": 70,
+        "protein_g": 6,
+        "fat_g": 5,
+        "carbs_g": 0,
+        "fiber_g": 0,
+        "sodium_mg": 70
+      },
+      "label_note": "1 large egg (50 g)"
+    },
+    {
+      "match": ["normandy", "vegetable"],
+      "photo": "product-labels/kirkland-normandy-vegetable-blend-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 98,
+      "per_serving": {
+        "kcal": 30,
+        "protein_g": 2,
+        "fat_g": 0,
+        "carbs_g": 6,
+        "fiber_g": 3,
+        "sodium_mg": 30
+      },
+      "label_note": "1 cup (98 g)"
+    },
+    {
+      "match": ["kirkland", "whey protein"],
+      "photo": "product-labels/kirkland-whey-protein-nutrition.png",
+      "label_note_extra": "Matches '…Whey Protein Creamy Chocolate' and similar Kirkland whey names; macros from your chocolate whey label.",
+      "kind": "per_grams",
+      "serving_g": 35,
+      "per_serving": {
+        "kcal": 130,
+        "protein_g": 25,
+        "fat_g": 2,
+        "carbs_g": 4,
+        "fiber_g": 1,
+        "sodium_mg": 170
+      },
+      "label_note": "1 scoop (35 g)"
+    },
+    {
+      "match": ["dot", "pretzel", "mustard"],
+      "photo": "product-labels/dots-honey-mustard-pretzel-twists-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 28,
+      "per_serving": {
+        "kcal": 130,
+        "protein_g": 2,
+        "fat_g": 5,
+        "carbs_g": 20,
+        "fiber_g": 0.5,
+        "sodium_mg": 260
+      },
+      "label_note": "1 oz (28 g / ~15 pieces); fiber shown as <1 g — 0.5 g used for scaling"
+    },
+    {
+      "match": ["happy village", "fig"],
+      "photo": "product-labels/happy-village-organic-sun-dried-figs-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 40,
+      "per_serving": {
+        "kcal": 130,
+        "protein_g": 2,
+        "fat_g": 0,
+        "carbs_g": 30,
+        "fiber_g": 3,
+        "sodium_mg": 10
+      },
+      "label_note": "1/3 cup (40 g)"
+    }
+  ]
+}
