@@ -119,49 +119,59 @@ def parse_multiday(path: Path) -> list[DayLog]:
     return days
 
 
+def _pick_serving(spec: dict, cooked: bool) -> tuple[dict, float | None, str]:
+    """Pick the right per-serving block and serving_g based on the cooked flag.
+
+    Returns (base_nutrition, serving_g_or_None, tag) where tag is "cooked" or "raw".
+    """
+    if cooked and "per_serving_cooked" in spec:
+        return spec["per_serving_cooked"], float(spec.get("serving_g_cooked", spec.get("serving_g", 0))), "cooked"
+    kind = spec["kind"]
+    if kind == "per_tbsp":
+        return spec["per_tbsp"], None, "raw"
+    if kind == "per_egg":
+        return spec["per_egg"], None, "raw"
+    return spec["per_serving"], float(spec.get("serving_g", 0)), "raw"
+
+
 def to_scale_amount(
-    food: str, amount: float, unit: str | None, spec: dict
+    food: str, amount: float, unit: str | None, spec: dict, cooked: bool = False
 ) -> tuple[float, str]:
     """Return (scale_factor, description) where nutrition = per_serving * factor."""
     u = (unit or "").strip().lower()
     kind = spec["kind"]
+    _, serving_g, tag = _pick_serving(spec, cooked)
 
-    if kind == "per_tbsp":
+    if kind == "per_tbsp" and tag == "raw":
         if u != "tbsp":
             return amount, f"assumed {amount:g} tbsp (log unit was {unit!r})"
         return amount, f"{amount:g} tbsp (label)"
 
-    if kind == "per_egg":
+    if kind == "per_egg" and tag == "raw":
         if u in ("egg", "eggs"):
             return amount, f"{amount:g} large eggs (label)"
         return amount, f"assumed {amount:g} eggs (log unit {unit!r})"
 
-    if kind == "per_ml":
+    if kind == "per_ml" and tag == "raw":
         serving = float(spec["serving_ml"])
         ml = amount
         return ml / serving, f"{ml:g} mL (≈g) ÷ {serving:g} mL/serving"
 
-    if kind == "per_grams":
-        serving_g = float(spec["serving_g"])
+    if serving_g and serving_g > 0:
         if u in ("scoop", "scoops"):
             grams = amount * serving_g
-            return grams / serving_g, f"{amount:g} scoop × {serving_g:g} g"
+            return grams / serving_g, f"{amount:g} scoop × {serving_g:g} g ({tag})"
         grams = amount
+        suffix = f" ({tag})" if cooked and "per_serving_cooked" in spec else ""
         if u and u not in ("g", "gram", "grams"):
-            return grams / serving_g, f"{grams:g} (treated as g; unit was {unit!r}) ÷ {serving_g:g} g/serving"
-        return grams / serving_g, f"{grams:g} g ÷ {serving_g:g} g/serving"
+            return grams / serving_g, f"{grams:g} (treated as g; unit was {unit!r}) ÷ {serving_g:g} g/serving{suffix}"
+        return grams / serving_g, f"{grams:g} g ÷ {serving_g:g} g/serving{suffix}"
 
     return 0.0, "unknown kind"
 
 
-def scale_nutrition(spec: dict, factor: float) -> dict[str, float]:
-    kind = spec["kind"]
-    if kind == "per_tbsp":
-        base = spec["per_tbsp"]
-    elif kind == "per_egg":
-        base = spec["per_egg"]
-    else:
-        base = spec["per_serving"]
+def scale_nutrition(spec: dict, factor: float, cooked: bool = False) -> dict[str, float]:
+    base, _, _ = _pick_serving(spec, cooked)
     return {k: round(float(base.get(k, 0) or 0) * factor, 2) for k in KEYS}
 
 
@@ -182,8 +192,8 @@ def process_day(day: DayLog, foods_spec: list) -> tuple[list[dict], dict, list[s
                 "error": "no label match in label_nutrition.json",
             })
             continue
-        factor, note = to_scale_amount(fr.food, fr.amount, fr.unit, spec)
-        nut = scale_nutrition(spec, factor)
+        factor, note = to_scale_amount(fr.food, fr.amount, fr.unit, spec, cooked=fr.cooked)
+        nut = scale_nutrition(spec, factor, cooked=fr.cooked)
         for k in KEYS:
             totals[k] += nut[k]
         lines.append({
