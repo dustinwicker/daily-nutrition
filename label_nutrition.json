@@ -151,6 +151,109 @@
         "sodium_mg": 10
       },
       "label_note": "1/3 cup (40 g)"
+    },
+    {
+      "match": ["kirkland", "almond", "sea salt"],
+      "photo": "product-labels/kirkland-roasted-almonds-sea-salt-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 28,
+      "per_serving": {
+        "kcal": 190,
+        "protein_g": 6,
+        "fat_g": 16,
+        "carbs_g": 5,
+        "fiber_g": 3,
+        "sodium_mg": 80
+      },
+      "label_note": "1 oz (28 g / ~15 pieces)"
+    },
+    {
+      "match": ["ultra organic", "mango"],
+      "photo": "product-labels/ultra-organics-organic-mango-chunks-frozen-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 140,
+      "per_serving": {
+        "kcal": 100,
+        "protein_g": 1,
+        "fat_g": 0,
+        "carbs_g": 22,
+        "fiber_g": 2,
+        "sodium_mg": 5
+      },
+      "label_note": "1 cup (140 g)"
+    },
+    {
+      "match": ["josie", "spring mix"],
+      "photo": "product-labels/josies-organics-spring-mix-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 85,
+      "per_serving": {
+        "kcal": 15,
+        "protein_g": 1,
+        "fat_g": 0,
+        "carbs_g": 3,
+        "fiber_g": 1,
+        "sodium_mg": 65
+      },
+      "label_note": "2 cups (85 g)"
+    },
+    {
+      "match": ["chicken thigh", "boneless", "skinless"],
+      "photo": "product-labels/kirkland-boneless-skinless-chicken-thighs-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 112,
+      "per_serving": {
+        "kcal": 130,
+        "protein_g": 22,
+        "fat_g": 4.5,
+        "carbs_g": 0,
+        "fiber_g": 0,
+        "sodium_mg": 105
+      },
+      "label_note": "4 oz (112 g) raw"
+    },
+    {
+      "match": ["windset", "symphony", "tomato"],
+      "photo": "product-labels/windset-farms-symphony-tomato-ensemble.png",
+      "kind": "per_grams",
+      "serving_g": 100,
+      "per_serving": {
+        "kcal": 18,
+        "protein_g": 1.18,
+        "fat_g": 0,
+        "carbs_g": 4.12,
+        "fiber_g": 1.18,
+        "sodium_mg": 5
+      },
+      "label_note": "Per 100 g from Open Food Facts (barcode 0674526210467). No label on package; sodium estimated from USDA cherry tomato data (~5 mg/100 g)."
+    },
+    {
+      "match": ["russet", "potato"],
+      "kind": "per_grams",
+      "serving_g": 100,
+      "per_serving": {
+        "kcal": 97,
+        "protein_g": 2.6,
+        "fat_g": 0.1,
+        "carbs_g": 21.4,
+        "fiber_g": 2.3,
+        "sodium_mg": 14
+      },
+      "label_note": "Per 100 g, USDA FoodData Central — russet potato, baked, flesh and skin. Log cooked weight."
+    },
+    {
+      "match": ["hass", "avocado"],
+      "kind": "per_grams",
+      "serving_g": 100,
+      "per_serving": {
+        "kcal": 160,
+        "protein_g": 2.0,
+        "fat_g": 14.7,
+        "carbs_g": 8.5,
+        "fiber_g": 6.7,
+        "sodium_mg": 7
+      },
+      "label_note": "Per 100 g, USDA FoodData Central — avocado, raw. Weigh flesh only (no skin/pit)."
     }
   ]
 }

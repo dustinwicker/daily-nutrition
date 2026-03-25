@@ -2,11 +2,14 @@
 """
 Compute daily nutrition from food_export.csv using label_nutrition.json (your photos).
 
-Grams column = food weight unless unit is tbsp, eggs, scoop (1 scoop = 35 g Kirkland whey).
+Supports multi-day logs (each day starts with a header row containing Date:).
+Grams column = food weight unless unit is tbsp, eggs, scoop.
+Column D = "Cooked" or blank (blank = Uncooked, the default).
 
 Usage:
   python compute_from_labels.py ../google_cloud/food_export.csv
   python compute_from_labels.py ../google_cloud/food_export.csv --json
+  python compute_from_labels.py ../google_cloud/food_export.csv --date 3/24/2026
 """
 from __future__ import annotations
 
@@ -14,6 +17,7 @@ import argparse
 import csv
 import json
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from label_data import load_foods, match_food
@@ -48,28 +52,71 @@ def macro_stats(totals: dict) -> dict:
     return out
 
 
-def parse_rows(path: Path) -> tuple[str | None, list[tuple[str, float, str | None]]]:
+@dataclass
+class FoodRow:
+    food: str
+    amount: float
+    unit: str | None
+    cooked: bool
+    date: str
+
+
+@dataclass
+class DayLog:
+    date: str
+    rows: list[FoodRow] = field(default_factory=list)
+
+
+def _is_header(row: list[str]) -> bool:
+    return (
+        len(row) >= 1
+        and row[0].strip().lower() == "food"
+        and any("date" in c.strip().rstrip(":").lower() for c in row)
+    )
+
+
+def _extract_date(row: list[str]) -> str | None:
+    for i, cell in enumerate(row):
+        if cell.strip().rstrip(":").lower() == "date":
+            if i + 1 < len(row) and row[i + 1].strip():
+                return row[i + 1].strip()
+    return None
+
+
+def parse_multiday(path: Path) -> list[DayLog]:
     text = path.read_text(encoding="utf-8-sig")
-    rows = list(csv.reader(text.splitlines()))
-    if not rows:
-        return None, []
-    header = rows[0]
-    log_date = None
-    if len(header) >= 5 and header[3].strip().rstrip(":").lower() == "date":
-        log_date = header[4].strip()
-    out = []
-    for row in rows[1:]:
+    all_rows = list(csv.reader(text.splitlines()))
+
+    days: list[DayLog] = []
+    current: DayLog | None = None
+
+    for row in all_rows:
         if not row or not row[0].strip():
             continue
+
+        if _is_header(row):
+            date = _extract_date(row) or "unknown"
+            current = DayLog(date=date)
+            days.append(current)
+            continue
+
+        if current is None:
+            continue
+
         food = row[0].strip()
         amt_raw = row[1].strip() if len(row) > 1 else "0"
         unit = row[2].strip() if len(row) > 2 and row[2].strip() else None
+        cooked_raw = row[3].strip().lower() if len(row) > 3 else ""
+        cooked = cooked_raw in ("cooked", "c", "yes", "true")
+
         try:
             amount = float(amt_raw.replace(",", ""))
         except ValueError:
             amount = 0.0
-        out.append((food, amount, unit))
-    return log_date, out
+
+        current.rows.append(FoodRow(food=food, amount=amount, unit=unit, cooked=cooked, date=current.date))
+
+    return days
 
 
 def to_scale_amount(
@@ -91,12 +138,7 @@ def to_scale_amount(
 
     if kind == "per_ml":
         serving = float(spec["serving_ml"])
-        if not u or u in ("g", "gram", "grams"):
-            ml = amount
-        elif u == "ml":
-            ml = amount
-        else:
-            ml = amount
+        ml = amount
         return ml / serving, f"{ml:g} mL (≈g) ÷ {serving:g} mL/serving"
 
     if kind == "per_grams":
@@ -123,89 +165,72 @@ def scale_nutrition(spec: dict, factor: float) -> dict[str, float]:
     return {k: round(float(base.get(k, 0) or 0) * factor, 2) for k in KEYS}
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("csv_path", type=Path)
-    ap.add_argument("--json", action="store_true")
-    args = ap.parse_args()
-
-    foods_spec = load_foods()
-    log_date, rows = parse_rows(args.csv_path)
-    if not rows:
-        sys.exit("No rows in CSV.")
-
+def process_day(day: DayLog, foods_spec: list) -> tuple[list[dict], dict, list[str]]:
     lines = []
     totals = {k: 0.0 for k in KEYS}
     missing = []
 
-    for food, amount, unit in rows:
-        spec = match_food(food, foods_spec)
+    for fr in day.rows:
+        spec = match_food(fr.food, foods_spec)
         if not spec:
-            missing.append(food)
-            lines.append(
-                {
-                    "food": food,
-                    "amount": amount,
-                    "unit": unit or "",
-                    "error": "no label match in label_nutrition.json",
-                }
-            )
+            missing.append(fr.food)
+            lines.append({
+                "food": fr.food,
+                "amount": fr.amount,
+                "unit": fr.unit or "",
+                "cooked": fr.cooked,
+                "error": "no label match in label_nutrition.json",
+            })
             continue
-        factor, note = to_scale_amount(food, amount, unit, spec)
+        factor, note = to_scale_amount(fr.food, fr.amount, fr.unit, spec)
         nut = scale_nutrition(spec, factor)
         for k in KEYS:
             totals[k] += nut[k]
-        lines.append(
-            {
-                "food": food,
-                "amount": amount,
-                "unit": unit or "",
-                "scale_note": note,
-                "factor": round(factor, 4),
-                "photo": spec.get("photo"),
-                **nut,
-            }
-        )
+        lines.append({
+            "food": fr.food,
+            "amount": fr.amount,
+            "unit": fr.unit or "",
+            "cooked": fr.cooked,
+            "scale_note": note,
+            "factor": round(factor, 4),
+            "photo": spec.get("photo"),
+            **nut,
+        })
 
     for k in totals:
         totals[k] = round(totals[k], 2)
 
-    macros = macro_stats(totals)
-    out = {
-        "date": log_date,
-        "lines": lines,
-        "totals": totals,
-        "macros": macros,
-        "unmatched": missing,
-    }
+    return lines, totals, missing
 
+
+def print_day(date: str, lines: list[dict], totals: dict, macros: dict, missing: list[str]) -> None:
     if missing:
         print("Unmatched rows (add to label_nutrition.json):", file=sys.stderr)
         for m in missing:
             print(f"  - {m}", file=sys.stderr)
         print(file=sys.stderr)
 
-    if args.json:
-        print(json.dumps(out, indent=2))
-        return
-
-    if log_date:
-        print(f"Log date: {log_date}\n")
-    print(f"{'Food':<52} {'Factor':>8}  {'kcal':>7} {'prot':>6} {'fat':>6} {'carb':>6} {'fib':>5} {'Na+':>7}")
+    print(f"{'═' * 110}")
+    print(f"  {date}")
+    print(f"{'═' * 110}")
+    cook_col = any(r.get("cooked") for r in lines)
+    hdr = f"{'Food':<48} {'C/U':>3} {'Factor':>8}  {'kcal':>7} {'prot':>6} {'fat':>6} {'carb':>6} {'fib':>5} {'Na+':>7}"
+    print(hdr)
     print("-" * 110)
     for row in lines:
+        cu = "C" if row.get("cooked") else "U"
         if "error" in row:
-            print(f"{row['food'][:52]:<52} {'—':>8}  {'—':>7} {'—':>6} {'—':>6} {'—':>6} {'—':>5} {'—':>7}")
+            print(f"{row['food'][:48]:<48} {cu:>3} {'—':>8}  {'—':>7} {'—':>6} {'—':>6} {'—':>6} {'—':>5} {'—':>7}")
             continue
         print(
-            f"{row['food'][:52]:<52} {row['factor']:8.3f}  {row['kcal']:7.0f} "
+            f"{row['food'][:48]:<48} {cu:>3} {row['factor']:8.3f}  {row['kcal']:7.0f} "
             f"{row['protein_g']:6.1f} {row['fat_g']:6.1f} {row['carbs_g']:6.1f} "
             f"{row['fiber_g']:5.1f} {row['sodium_mg']:7.0f}"
         )
     print("-" * 110)
     t = totals
     print(
-        f"{'TOTAL':<52} {'':>8}  {t['kcal']:7.0f} {t['protein_g']:6.1f} "
+        f"{'TOTAL':<48} {'':>3} {'':>8}  {t['kcal']:7.0f} {t['protein_g']:6.1f} "
         f"{t['fat_g']:6.1f} {t['carbs_g']:6.1f} {t['fiber_g']:5.1f} {t['sodium_mg']:7.0f}"
     )
     print()
@@ -214,7 +239,7 @@ def main() -> None:
         f"protein {macros['pct_of_total_kcal_protein']:.1f}%  ·  "
         f"fat {macros['pct_of_total_kcal_fat']:.1f}%  ·  "
         f"carbs {macros['pct_of_total_kcal_carbs']:.1f}%"
-        "  — the three can add to more than 100% when label kcal ≠ 4P+9F+4C."
+        "  — can add to >100% when label kcal ≠ 4P+9F+4C."
     )
     print(
         f"Macro split (only P/F/C kcal; always totals 100%):  "
@@ -225,6 +250,50 @@ def main() -> None:
     print(
         f"(Implied kcal from macros: {macros['kcal_from_macros_sum']:.0f}; summed food kcal: {t['kcal']:.0f}.)"
     )
+    print()
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description="Compute daily nutrition from label data.")
+    ap.add_argument("csv_path", type=Path, help="Path to food_export.csv")
+    ap.add_argument("--json", action="store_true", help="Emit JSON instead of text tables")
+    ap.add_argument("--date", type=str, default=None, help="Show only this date (e.g. 3/24/2026)")
+    args = ap.parse_args()
+
+    foods_spec = load_foods()
+    days = parse_multiday(args.csv_path)
+    if not days:
+        sys.exit("No day headers found in CSV.")
+
+    if args.date:
+        days = [d for d in days if d.date == args.date]
+        if not days:
+            sys.exit(f"No data found for date {args.date!r}.")
+
+    all_days_out = []
+    for day in days:
+        lines, totals, missing = process_day(day, foods_spec)
+        macros = macro_stats(totals)
+        all_days_out.append({
+            "date": day.date,
+            "lines": lines,
+            "totals": totals,
+            "macros": macros,
+            "unmatched": missing,
+        })
+
+    if args.json:
+        print(json.dumps(all_days_out if len(all_days_out) > 1 else all_days_out[0], indent=2))
+        return
+
+    for day_out in all_days_out:
+        print_day(
+            day_out["date"],
+            day_out["lines"],
+            day_out["totals"],
+            day_out["macros"],
+            day_out["unmatched"],
+        )
 
 
 if __name__ == "__main__":
