@@ -254,6 +254,21 @@
         "sodium_mg": 7
       },
       "label_note": "Per 100 g, USDA FoodData Central — avocado, raw. Weigh flesh only (no skin/pit)."
+    },
+    {
+      "match": ["kirkland", "blueberr"],
+      "photo": "product-labels/kirkland-organic-blueberries-frozen-nutrition.png",
+      "kind": "per_grams",
+      "serving_g": 140,
+      "per_serving": {
+        "kcal": 70,
+        "protein_g": 1,
+        "fat_g": 1,
+        "carbs_g": 17,
+        "fiber_g": 4,
+        "sodium_mg": 0
+      },
+      "label_note": "1 cup (140 g)"
     }
   ]
 }
