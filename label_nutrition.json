@@ -317,6 +317,21 @@
         "sodium_mg": 61
       },
       "label_note": "USDA SR Legacy — farmed Atlantic salmon, cooked (dry heat), per 100 g. Log cooked weight."
+    },
+    {
+      "match": ["liks", "elvis"],
+      "photo": null,
+      "kind": "per_grams",
+      "serving_g": 80,
+      "per_serving": {
+        "kcal": 244,
+        "protein_g": 5.6,
+        "fat_g": 14.2,
+        "carbs_g": 24.2,
+        "fiber_g": 0.5,
+        "sodium_mg": 80
+      },
+      "label_note": "Estimate: 1 scoop (~80 g) premium banana-PB-chocolate ice cream (avg of USDA chocolate-PB brands ~280 kcal/100g) + half a sugar cone (20 kcal). Log amount as number of scoops with unit 'scoops'. No official nutrition from Liks."
     }
   ]
 }
